@@ -1,5 +1,5 @@
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './users.schema';
 import { UserBody } from './users.dto';
@@ -15,7 +15,25 @@ export class UsersService {
     return createdUser.save();
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+  async findAll(): Promise<any> {
+    const data = await this.userModel.find().exec();
+    const res = {
+      data,
+      meta: {},
+    };
+    return res;
+  }
+
+  async findDetail(id: string): Promise<User> {
+    const data = await this.userModel.findById(id).exec();
+    if (!data)
+      throw new NotFoundException(`id user ${id} not found in our data!`);
+    return data;
+  }
+
+  async updateDetail(id: string, context: any): Promise<User> {
+    await this.userModel.updateOne({ _id: id }, { $set: context });
+    const data = await this.userModel.findById(id).exec();
+    return data;
   }
 }
