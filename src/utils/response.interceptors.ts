@@ -6,8 +6,8 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export type Response<T> = {
   status: boolean;
@@ -29,18 +29,17 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<Response<T>> {
-    return next.handle().pipe(
-      map((res: unknown) => this.responseHandler(res, context)),
-      catchError((err: HttpException) =>
-        throwError(() => this.errorHandler(err, context)),
-      ),
-    );
+    return next
+      .handle()
+      .pipe(map((res: unknown) => this.responseHandler(res, context)));
   }
 
   errorHandler(exception: HttpException, context: ExecutionContext) {
     const ctx = context.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();
+
+    console.log('asdasdasdasdasdasdasdas', exception.getResponse());
     const resp: string | Resp = exception.getResponse();
 
     const status =
@@ -76,8 +75,8 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
     return {
       status: true,
       statusCode,
-      data: res,
       timestamp: new Date().toISOString(),
+      ...(res?.meta || { data: res }),
     };
   }
 }
